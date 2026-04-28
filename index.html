@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Vendas Hotmart</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #022c22 100%); min-height: 100vh; color: #fff; -webkit-font-smoothing: antialiased; }
+  .header { border-bottom: 1px solid rgba(30, 41, 59, 0.5); backdrop-filter: blur(20px); background: rgba(2, 6, 23, 0.7); position: sticky; top: 0; z-index: 10; }
+  .header-inner { max-width: 1280px; margin: 0 auto; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .logo-area { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #10B981, #06B6D4); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3); font-size: 20px; }
+  .logo-text h1 { font-size: 18px; font-weight: 700; line-height: 1.2; }
+  .logo-text p { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+  .header-actions { display: flex; gap: 8px; }
+  .btn { padding: 8px 16px; border-radius: 12px; background: #1e293b; color: #fff; border: none; cursor: pointer; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+  .btn:hover { background: #334155; }
+  .btn-auto { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+  .btn-auto.off { background: #1e293b; color: #94a3b8; border-color: #334155; }
+  main { max-width: 1280px; margin: 0 auto; padding: 32px 24px; }
+  .funnel-selector { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .funnel-btn { flex: 1; min-width: 200px; padding: 16px 20px; border-radius: 16px; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(20px); border: 1px solid #1e293b; cursor: pointer; transition: all 0.2s; text-align: left; color: #fff; }
+  .funnel-btn:hover { border-color: #334155; background: rgba(15, 23, 42, 0.8); }
+  .funnel-btn.active { border-color: #10B981; background: rgba(16, 185, 129, 0.1); box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3); }
+  .funnel-btn .icon { font-size: 24px; margin-bottom: 8px; display: block; }
+  .funnel-btn .title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .funnel-btn .subtitle { font-size: 12px; color: #94a3b8; }
+  .funnel-card { background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(20px); border: 1px solid #1e293b; border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+  .funnel-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .funnel-card-title { font-size: 20px; font-weight: 700; }
+  .funnel-card-subtitle { font-size: 13px; color: #94a3b8; margin-top: 2px; }
+  .funnel-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .funnel-stat { background: rgba(2, 6, 23, 0.5); border-radius: 12px; padding: 16px; border: 1px solid #1e293b; }
+  .funnel-stat .label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .funnel-stat .value { font-size: 22px; font-weight: 700; }
+  .funnel-stat .sub { font-size: 12px; color: #64748b; margin-top: 4px; }
+  .funnel-stages { display: flex; flex-direction: column; gap: 4px; }
+  .funnel-stage { background: rgba(2, 6, 23, 0.4); border: 1px solid #1e293b; border-radius: 12px; padding: 16px 20px; }
+  .funnel-stage.front { border-left: 4px solid #10B981; }
+  .funnel-stage.bump { border-left: 4px solid #F59E0B; }
+  .funnel-stage.upsell { border-left: 4px solid #8B5CF6; }
+  .stage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+  .stage-name { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .stage-tag { font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stage-tag.front { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+  .stage-tag.bump { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+  .stage-tag.upsell { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+  .stage-numbers { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .stage-number { font-size: 13px; }
+  .stage-number .qty { font-weight: 700; font-size: 18px; }
+  .stage-number .lbl { color: #64748b; font-size: 11px; text-transform: uppercase; }
+  .stage-number .conv-mini { background: rgba(16, 185, 129, 0.1); color: #34d399; padding: 2px 8px; border-radius: 999px; font-weight: 600; font-size: 11px; margin-left: 4px; }
+  .stage-bar-bg { height: 8px; background: #1e293b; border-radius: 999px; overflow: hidden; }
+  .stage-bar-fill { height: 100%; border-radius: 999px; transition: width 0.5s; }
+  .stage-bar-fill.front { background: linear-gradient(to right, #10B981, #06B6D4); }
+  .stage-bar-fill.bump { background: linear-gradient(to right, #F59E0B, #F97316); }
+  .stage-bar-fill.upsell { background: linear-gradient(to right, #8B5CF6, #A855F7); }
+  .stage-codes { font-size: 11px; color: #64748b; margin-top: 6px; font-family: monospace; }
+  .funnel-arrow { display: flex; align-items: center; justify-content: center; padding: 6px 0; gap: 8px; color: #64748b; font-size: 12px; }
+  .funnel-arrow .conv-rate { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 12px; }
+  .funnel-section-divider { padding: 12px 20px; border-radius: 12px; background: rgba(2, 6, 23, 0.4); border: 1px dashed #334155; text-align: center; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin: 4px 0; }
+  .stages-group { display: flex; flex-direction: column; gap: 4px; }
+  .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 768px) { .comparison-grid { grid-template-columns: 1fr; } }
+  .comparison-card { background: rgba(2, 6, 23, 0.4); border: 1px solid #1e293b; border-radius: 12px; padding: 20px; }
+  .comparison-card .title { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .comparison-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1e293b; }
+  .comparison-row:last-child { border-bottom: none; }
+  .comparison-row .lbl { font-size: 13px; color: #94a3b8; }
+  .comparison-row .val { font-size: 14px; font-weight: 600; }
+  .filters-section { background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(20px); border: 1px solid #1e293b; border-radius: 16px; padding: 20px; margin-bottom: 24px; }
+  .filters-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
+  .filters-row:last-child { margin-bottom: 0; }
+  .filter-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .filter-label-mini { color: #64748b; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; margin-right: 4px; }
+  .pill { padding: 6px 16px; border-radius: 999px; background: #1e293b; color: #cbd5e1; border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+  .pill:hover { background: #334155; }
+  .pill.active-emerald { background: #10B981; color: #fff; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3); }
+  .pill.active-cyan { background: #06B6D4; color: #fff; box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.3); }
+  .search-box { position: relative; }
+  .search-box input { padding: 8px 16px 8px 40px; border-radius: 12px; background: #1e293b; border: 1px solid #334155; color: #fff; font-size: 13px; width: 224px; outline: none; transition: border-color 0.2s; }
+  .search-box input:focus { border-color: #10B981; }
+  .search-box::before { content: '🔍'; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.5; }
+  .select-custom { padding: 8px 16px; border-radius: 12px; background: #1e293b; border: 1px solid #334155; color: #fff; font-size: 13px; cursor: pointer; outline: none; min-width: 200px; transition: border-color 0.2s; }
+  .select-custom:focus { border-color: #10B981; }
+  .select-custom option { background: #0f172a; }
+  .date-input { padding: 8px 12px; border-radius: 12px; background: #1e293b; border: 1px solid #334155; color: #fff; font-size: 13px; cursor: pointer; outline: none; transition: border-color 0.2s; color-scheme: dark; }
+  .date-input:focus { border-color: #10B981; }
+  .clear-filters-btn { padding: 6px 12px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #f87171; font-size: 12px; cursor: pointer; }
+  .clear-filters-btn:hover { background: rgba(239, 68, 68, 0.2); }
+  .active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #1e293b; }
+  .filter-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #34d399; font-size: 12px; font-weight: 500; }
+  .filter-tag .remove { cursor: pointer; opacity: 0.7; font-size: 14px; line-height: 1; }
+  .filter-tag .remove:hover { opacity: 1; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .metric-card { position: relative; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(20px); border: 1px solid #1e293b; border-radius: 16px; padding: 24px; overflow: hidden; }
+  .metric-card:hover { border-color: #334155; }
+  .metric-glow { position: absolute; top: -48px; right: -48px; width: 128px; height: 128px; border-radius: 50%; opacity: 0.1; filter: blur(32px); pointer-events: none; }
+  .metric-card .label { color: #94a3b8; font-size: 14px; font-weight: 500; }
+  .metric-card .icon-box { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .metric-card .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .metric-card .value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+  .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .charts-row.full { grid-template-columns: 1fr; }
+  @media (max-width: 1024px) { .charts-row { grid-template-columns: 1fr; } }
+  .chart-card { background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(20px); border: 1px solid #1e293b; border-radius: 16px; padding: 24px; }
+  .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .chart-header h3 { font-size: 18px; font-weight: 600; }
+  .chart-header p { color: #94a3b8; font-size: 14px; margin-top: 2px; }
+  .chart-header .icon-box { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .chart-container { position: relative; height: 280px; }
+  .chart-container.small { height: 180px; }
+  .chart-container.tall { height: 360px; }
+  .legend-list { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .legend-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+  .product-rank { display: flex; flex-direction: column; gap: 12px; }
+  .product-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .product-rank-num { width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-right: 12px; }
+  .rank-1 { background: linear-gradient(135deg, #fbbf24, #d97706); color: #fff; }
+  .rank-2 { background: linear-gradient(135deg, #cbd5e1, #64748b); color: #fff; }
+  .rank-3 { background: linear-gradient(135deg, #fb923c, #c2410c); color: #fff; }
+  .rank-other { background: #1e293b; color: #94a3b8; }
+  .progress-bar { height: 8px; background: #1e293b; border-radius: 999px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(to right, #10B981, #06B6D4); border-radius: 999px; transition: width 0.5s; }
+  .status-list { display: flex; flex-direction: column; gap: 12px; }
+  .status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 13px; }
+  .status-bar { height: 6px; background: #1e293b; border-radius: 999px; overflow: hidden; }
+  .table-card { background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(20px); border: 1px solid #1e293b; border-radius: 16px; overflow: hidden; }
+  .table-header { padding: 24px; border-bottom: 1px solid #1e293b; }
+  .table-header h3 { font-size: 18px; font-weight: 600; }
+  .table-header p { color: #94a3b8; font-size: 14px; margin-top: 2px; }
+  .table-wrapper { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: rgba(15, 23, 42, 0.8); }
+  th { text-align: left; padding: 12px 24px; color: #94a3b8; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #1e293b; }
+  tbody tr { border-bottom: 1px solid rgba(30, 41, 59, 0.5); }
+  tbody tr:hover { background: rgba(30, 41, 59, 0.3); }
+  td { padding: 16px 24px; font-size: 14px; }
+  td.right { text-align: right; }
+  td.center { text-align: center; }
+  .client-name { color: #fff; font-weight: 500; }
+  .client-email { color: #64748b; font-size: 12px; margin-top: 2px; }
+  .badge { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; display: inline-block; }
+  .table-footer { padding: 16px; text-align: center; color: #64748b; font-size: 13px; border-top: 1px solid #1e293b; }
+  .footer { margin-top: 32px; text-align: center; color: #64748b; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .loader-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .loader-icon { width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, #10B981, #06B6D4); display: flex; align-items: center; justify-content: center; font-size: 32px; margin-bottom: 16px; animation: pulse 2s infinite; box-shadow: 0 20px 50px -10px rgba(16, 185, 129, 0.3); }
+  .error-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .error-card { max-width: 480px; width: 100%; background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(127, 29, 29, 0.5); border-radius: 24px; padding: 32px; text-align: center; }
+  .error-icon { width: 64px; height: 64px; border-radius: 16px; background: rgba(239, 68, 68, 0.2); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 28px; }
+  .empty-state { text-align: center; padding: 48px 24px; color: #64748b; }
+  .section-title { font-size: 13px; color: #94a3b8; font-weight: 500; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="loader-screen">
+    <div class="loader-icon">📊</div>
+    <p style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">Carregando suas vendas...</p>
+    <p style="font-size: 14px; color: #94a3b8;">Conectando ao Google Sheets</p>
+  </div>
+</div>
+
+<script>
+// URLs das duas abas
+const SHEET_VENDAS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQOV1NBMBydzOMJVDstWcxhXQCrlth7fiq4HFpb_pH6Lzsp94PI-6YplIZLXxdIeg-Uawr8V5za8x33/pub?gid=0&single=true&output=csv';
+// O Mapeamento_ofertas tem que ser publicado também! Vamos puxar pelo gid (descobrir abaixo)
+const REFRESH_MS = 60000;
+
+// METADADOS DOS FUNIS (configuração visual apenas - dados vêm da planilha)
+const FUNIS_META = {
+  'styleclub': { nome: 'Style Club', icone: '👗', subtitle: 'Front + Upsell' },
+  'manualmala': { nome: 'Manual da Mala de Viagem', icone: '✈️', subtitle: 'Front + Bumps + Upsells' }
+};
+
+let vendas = [];
+let mapeamento = []; // {codigo, produto, tipo, funil}
+let funilSelecionado = 'todos';
+let filtroPeriodo = 'todos';
+let filtroTipo = 'todos';
+let filtroProduto = 'todos';
+let filtroDataInicio = '';
+let filtroDataFim = '';
+let busca = '';
+let chartLinha = null;
+let chartPie = null;
+let chartQuantidade = null;
+let autoRefresh = true;
+let ultimaAtualizacao = null;
+let primeiraVez = true;
+let intervalRef = null;
+
+const formatBRL = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const formatPct = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+
+function parseLine(line) {
+  const r = []; let cur = ''; let q = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') q = !q;
+    else if (c === ',' && !q) { r.push(cur.trim()); cur = ''; }
+    else cur += c;
+  }
+  r.push(cur.trim());
+  return r.map(c => c.replace(/^"|"$/g, ''));
+}
+
+function parseCSVVendas(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const headers = parseLine(lines[0]).map(h => h.toLowerCase());
+  const findIdx = (...names) => {
+    for (const n of names) {
+      const i = headers.findIndex(h => h.includes(n.toLowerCase()));
+      if (i !== -1) return i;
+    }
+    return -1;
+  };
+  const iData = findIdx('data');
+  const iNome = findIdx('nome');
+  const iEmail = findIdx('email');
+  const iTel = findIdx('telefone');
+  const iProd = findIdx('produto');
+  const iCod = findIdx('código', 'codigo', 'oferta');
+  const iTipo = findIdx('tipo');
+  const iVal = findIdx('valor');
+  const iSt = findIdx('status');
+  return lines.slice(1).map(line => {
+    const c = parseLine(line);
+    let d = c[iData] || ''; let dObj = null;
+    if (d) {
+      const n = Number(d);
+      if (!isNaN(n) && n > 1e12) dObj = new Date(n);
+      else if (!isNaN(n) && n > 1e9) dObj = new Date(n * 1000);
+      else {
+        const m = d.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+        if (m) dObj = new Date(+m[3], +m[2]-1, +m[1], m[4]?+m[4]:0, m[5]?+m[5]:0);
+        else dObj = new Date(d);
+      }
+      if (isNaN(dObj?.getTime())) dObj = null;
+    }
+    let v = (c[iVal] || '0').toString().replace(/R\$|\s/g, '');
+    if (v.includes(',')) v = v.replace(/\./g, '').replace(',', '.');
+    return {
+      data: dObj,
+      dataStr: dObj ? dObj.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '',
+      nome: c[iNome] || '',
+      email: (c[iEmail] || '').toLowerCase().trim(),
+      telefone: c[iTel] || '',
+      produto: c[iProd] || 'Sem produto',
+      codigo: (c[iCod] || '').trim(),
+      tipo: c[iTipo] || 'Não classificado',
+      valor: parseFloat(v) || 0,
+      status: c[iSt] || ''
+    };
+  }).filter(v => v.nome || v.email);
+}
+
+function parseCSVMapeamento(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const headers = parseLine(lines[0]).map(h => h.toLowerCase());
+  const findIdx = (...names) => {
+    for (const n of names) {
+      const i = headers.findIndex(h => h.includes(n.toLowerCase()));
+      if (i !== -1) return i;
+    }
+    return -1;
+  };
+  const iCod = findIdx('código', 'codigo', 'oferta');
+  const iProd = findIdx('produto', 'nome');
+  const iTipo = findIdx('tipo');
+  const iFunil = findIdx('funil');
+  return lines.slice(1).map(line => {
+    const c = parseLine(line);
+    return {
+      codigo: (c[iCod] || '').trim(),
+      produto: (c[iProd] || '').trim(),
+      tipo: (c[iTipo] || '').trim().toLowerCase(),
+      funil: (c[iFunil] || '').trim().toLowerCase()
+    };
+  }).filter(m => m.codigo);
+}
+
+async function buscarDados(silencioso = false) {
+  try {
+    // Buscar vendas
+    const r = await fetch(`${SHEET_VENDAS_URL}&_t=${Date.now()}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const t = await r.text();
+    vendas = parseCSVVendas(t);
+    
+    // Tentar buscar mapeamento (gid=1 ou outros)
+    // O gid do Mapeamento_ofertas precisa ser descoberto
+    // Por enquanto vamos tentar gids comuns: 1, 2, etc
+    await tentarBuscarMapeamento();
+    
+    ultimaAtualizacao = new Date();
+    primeiraVez = false;
+    render();
+  } catch (e) {
+    if (primeiraVez) {
+      document.getElementById('app').innerHTML = `<div class="error-screen"><div class="error-card"><div class="error-icon">⚠️</div><h2 style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Erro ao carregar dados</h2><p style="color: #94a3b8; font-size: 14px; margin-bottom: 24px;">${e.message}</p><button onclick="buscarDados()" class="btn" style="margin: 0 auto; background: #10B981;">🔄 Tentar novamente</button></div></div>`;
+    }
+    console.error('Erro:', e);
+  }
+}
+
+async function tentarBuscarMapeamento() {
+  // O usuário precisa publicar a aba Mapeamento_ofertas separadamente
+  // Vamos derivar a partir das próprias vendas (cruzando com tipo conhecido)
+  // Por enquanto, vamos extrair o mapeamento das próprias vendas
+  derivarMapeamentoDasVendas();
+}
+
+function derivarMapeamentoDasVendas() {
+  // Como fallback, vamos derivar o mapeamento das vendas existentes
+  // baseado nos códigos e tipos que já vêm preenchidos pela fórmula PROCV
+  const mapaTemp = {};
+  vendas.forEach(v => {
+    if (!v.codigo) return;
+    if (v.tipo === 'Não classificado' || v.tipo === 'Código não cadastrado') return;
+    if (!mapaTemp[v.codigo]) {
+      mapaTemp[v.codigo] = {
+        codigo: v.codigo,
+        produto: v.produto,
+        tipo: v.tipo.toLowerCase(),
+        funil: identificarFunil(v.produto, v.tipo)
+      };
+    }
+  });
+  mapeamento = Object.values(mapaTemp);
+}
+
+function identificarFunil(produto, tipo) {
+  const p = (produto || '').toLowerCase();
+  // Style Club + variações
+  if (p.includes('style club') && !p.includes('upsell manual')) return 'styleclub';
+  if (p.includes('consultoria mapa do estilo')) return 'styleclub';
+  if (p.includes('mapa do estilo')) return 'styleclub';
+  // Manual da Mala + variações + bumps
+  if (p.includes('manual') && p.includes('mala')) return 'manualmala';
+  if (p.includes('182 looks')) return 'manualmala';
+  if (p.includes('pasta secreta')) return 'manualmala';
+  if (p.includes('upsell manual')) return 'manualmala';
+  if (p.includes('manual api')) return 'manualmala';
+  if (p.includes('style club upsell manual')) return 'manualmala';
+  return '';
+}
+
+function getCodigosFunil(funilKey, tipoEtapa) {
+  // Retorna os códigos de oferta que pertencem a determinada etapa do funil
+  const tipoLower = tipoEtapa.toLowerCase();
+  return mapeamento
+    .filter(m => m.funil === funilKey && m.tipo.includes(tipoLower))
+    .map(m => m.codigo);
+}
+
+function getProdutosFunil(funilKey, tipoEtapa) {
+  const tipoLower = tipoEtapa.toLowerCase();
+  const items = mapeamento.filter(m => m.funil === funilKey && m.tipo.includes(tipoLower));
+  // Agrupar por produto único
+  const produtosMap = {};
+  items.forEach(m => {
+    if (!produtosMap[m.produto]) produtosMap[m.produto] = { nome: m.produto, codigos: [] };
+    produtosMap[m.produto].codigos.push(m.codigo);
+  });
+  return Object.values(produtosMap);
+}
+
+function aplicarFiltrosBase(arr) {
+  let r = [...arr];
+  const agora = new Date();
+  if (filtroPeriodo === 'hoje') r = r.filter(v => v.data && v.data.toDateString() === agora.toDateString());
+  else if (filtroPeriodo === '7dias') { const l = new Date(); l.setDate(l.getDate()-7); r = r.filter(v => v.data && v.data >= l); }
+  else if (filtroPeriodo === '30dias') { const l = new Date(); l.setDate(l.getDate()-30); r = r.filter(v => v.data && v.data >= l); }
+  if (filtroDataInicio) { const di = new Date(filtroDataInicio + 'T00:00:00'); r = r.filter(v => v.data && v.data >= di); }
+  if (filtroDataFim) { const df = new Date(filtroDataFim + 'T23:59:59'); r = r.filter(v => v.data && v.data <= df); }
+  return r;
+}
+
+function filtrar() {
+  let r = aplicarFiltrosBase(vendas);
+  if (filtroTipo !== 'todos') r = r.filter(v => v.tipo.toLowerCase().includes(filtroTipo));
+  if (filtroProduto !== 'todos') r = r.filter(v => v.produto === filtroProduto);
+  if (busca) {
+    const b = busca.toLowerCase();
+    r = r.filter(v => v.nome.toLowerCase().includes(b) || v.email.toLowerCase().includes(b) || v.produto.toLowerCase().includes(b));
+  }
+  if (funilSelecionado !== 'todos') {
+    // Pegar TODOS os códigos do funil selecionado (front + bumps + upsells)
+    const codigosFunil = mapeamento.filter(m => m.funil === funilSelecionado).map(m => m.codigo);
+    r = r.filter(v => codigosFunil.includes(v.codigo));
+  }
+  return r.sort((a,b) => (b.data||0) - (a.data||0));
+}
+
+function calcularFunil(funilKey) {
+  const meta = FUNIS_META[funilKey];
+  if (!meta) return null;
+  
+  const baseFiltrada = aplicarFiltrosBase(vendas).filter(v => /APPROV|APROV|COMPLETE/i.test(v.status));
+  
+  // Agrupar produtos do funil por tipo
+  const produtosFront = getProdutosFunil(funilKey, 'front');
+  const produtosBump = getProdutosFunil(funilKey, 'bump');
+  const produtosUpsell = getProdutosFunil(funilKey, 'upsell');
+  
+  // FRONT - somar todas as vendas de qualquer código de front
+  const codigosFront = produtosFront.flatMap(p => p.codigos);
+  const vendasFront = baseFiltrada.filter(v => codigosFront.includes(v.codigo));
+  const emailsFront = new Set(vendasFront.map(v => v.email).filter(e => e));
+  const faturamentoFront = vendasFront.reduce((s, v) => s + v.valor, 0);
+  
+  // ORDER BUMPS - cada produto bump separado, com sua taxa de conversão
+  const bumps = produtosBump.map(p => {
+    const vendasBump = baseFiltrada.filter(v => p.codigos.includes(v.codigo));
+    const emailsBumpQueCompraramFront = new Set(
+      vendasBump.filter(v => emailsFront.has(v.email)).map(v => v.email).filter(e => e)
+    );
+    const conversao = emailsFront.size > 0 ? (emailsBumpQueCompraramFront.size / emailsFront.size) * 100 : 0;
+    return {
+      tipo: 'bump',
+      nome: p.nome,
+      codigos: p.codigos,
+      vendas: vendasBump.length,
+      vendasComFront: emailsBumpQueCompraramFront.size,
+      faturamento: vendasBump.reduce((s, v) => s + v.valor, 0),
+      conversao: conversao,
+      tag: 'ORDER BUMP'
+    };
+  });
+  
+  // UPSELLS - cada produto upsell separado
+  const upsells = produtosUpsell.map(p => {
+    const vendasUpsell = baseFiltrada.filter(v => p.codigos.includes(v.codigo));
+    const emailsUpsellQueCompraramFront = new Set(
+      vendasUpsell.filter(v => emailsFront.has(v.email)).map(v => v.email).filter(e => e)
+    );
+    const conversao = emailsFront.size > 0 ? (emailsUpsellQueCompraramFront.size / emailsFront.size) * 100 : 0;
+    return {
+      tipo: 'upsell',
+      nome: p.nome,
+      codigos: p.codigos,
+      vendas: vendasUpsell.length,
+      vendasComFront: emailsUpsellQueCompraramFront.size,
+      faturamento: vendasUpsell.reduce((s, v) => s + v.valor, 0),
+      conversao: conversao,
+      tag: 'UPSELL'
+    };
+  });
+  
+  const faturamentoTotal = faturamentoFront + bumps.reduce((s, b) => s + b.faturamento, 0) + upsells.reduce((s, u) => s + u.faturamento, 0);
+  const totalClientesUnicos = emailsFront.size;
+  const ticketMedioFunil = totalClientesUnicos > 0 ? faturamentoTotal / totalClientesUnicos : 0;
+  const totalVendas = vendasFront.length + bumps.reduce((s,b) => s + b.vendas, 0) + upsells.reduce((s,u) => s + u.vendas, 0);
+  
+  return {
+    meta: meta,
+    front: {
+      tipo: 'front',
+      nome: produtosFront[0]?.nome || meta.nome,
+      codigos: codigosFront,
+      vendas: vendasFront.length,
+      faturamento: faturamentoFront,
+      conversao: 100,
+      tag: 'FRONT'
+    },
+    bumps: bumps,
+    upsells: upsells,
+    faturamentoTotal: faturamentoTotal,
+    clientesUnicos: totalClientesUnicos,
+    ticketMedioFunil: ticketMedioFunil,
+    totalVendas: totalVendas
+  };
+}
+
+function tempoDesde() {
+  if (!ultimaAtualizacao) return '';
+  const diff = Math.floor((Date.now() - ultimaAtualizacao.getTime()) / 1000);
+  if (diff < 5) return 'agora';
+  if (diff < 60) return `há ${diff}s`;
+  if (diff < 3600) return `há ${Math.floor(diff/60)}min`;
+  return ultimaAtualizacao.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+}
+
+function renderEtapa(etapa, maxVendas) {
+  const largura = maxVendas > 0 ? (etapa.vendas / maxVendas) * 100 : 0;
+  const icones = { front: '🟢', bump: '🟠', upsell: '🟣' };
+  const icone = icones[etapa.tipo] || '⚪';
+  const showConv = etapa.tipo !== 'front' && etapa.conversao !== undefined;
+  const codigosDisplay = etapa.codigos.length > 1 ? `${etapa.codigos.length} ofertas: ${etapa.codigos.join(', ')}` : etapa.codigos[0];
+  
+  return `
+    <div class="funnel-stage ${etapa.tipo}">
+      <div class="stage-header">
+        <span class="stage-name">
+          ${icone} ${etapa.nome}
+          <span class="stage-tag ${etapa.tipo}">${etapa.tag}</span>
+        </span>
+        <div class="stage-numbers">
+          <div class="stage-number">
+            <span class="qty">${etapa.vendas}</span> 
+            <span class="lbl">vendas</span>
+            ${showConv ? `<span class="conv-mini">${formatPct(etapa.conversao)} conv.</span>` : ''}
+          </div>
+          <div class="stage-number"><span class="qty">${formatBRL(etapa.faturamento)}</span></div>
+        </div>
+      </div>
+      <div class="stage-bar-bg">
+        <div class="stage-bar-fill ${etapa.tipo}" style="width: ${largura}%;"></div>
+      </div>
+      <div class="stage-codes">${codigosDisplay}</div>
+    </div>
+  `;
+}
+
+function renderFunil(funilKey) {
+  const f = calcularFunil(funilKey);
+  const meta = FUNIS_META[funilKey];
+  if (!f || f.front.vendas === 0) {
+    return `<div class="funnel-card"><div class="funnel-card-header"><div><div class="funnel-card-title">${meta.icone} Funil ${meta.nome}</div></div></div><div class="empty-state">Nenhuma venda encontrada para este funil no período selecionado</div></div>`;
+  }
+  
+  const todasEtapas = [f.front, ...f.bumps, ...f.upsells];
+  const maxVendas = Math.max(...todasEtapas.map(e => e.vendas));
+  
+  const convPrincipal = f.upsells[0]?.conversao || 0;
+  const taxaBumpMedia = f.bumps.length > 0 
+    ? f.bumps.reduce((s, b) => s + b.conversao, 0) / f.bumps.length 
+    : 0;
+  
+  let stagesHtml = `<div class="stages-group">${renderEtapa(f.front, maxVendas)}</div>`;
+  
+  if (f.bumps.length > 0) {
+    stagesHtml += `<div class="funnel-section-divider">🟠 Order Bumps (mesma página de checkout)</div>`;
+    stagesHtml += `<div class="stages-group">${f.bumps.map(b => renderEtapa(b, maxVendas)).join('')}</div>`;
+  }
+  
+  if (f.upsells.length > 0) {
+    stagesHtml += `<div class="funnel-arrow">↓ <span class="conv-rate">${formatPct(convPrincipal)} conversão para upsell</span></div>`;
+    stagesHtml += `<div class="stages-group">${f.upsells.map(u => renderEtapa(u, maxVendas)).join('')}</div>`;
+  }
+  
+  return `
+    <div class="funnel-card">
+      <div class="funnel-card-header">
+        <div>
+          <div class="funnel-card-title">${meta.icone} Funil ${meta.nome}</div>
+          <div class="funnel-card-subtitle">Análise completa do funil de vendas</div>
+        </div>
+      </div>
+      
+      <div class="funnel-stats-row">
+        <div class="funnel-stat">
+          <div class="label">💰 Faturamento total</div>
+          <div class="value">${formatBRL(f.faturamentoTotal)}</div>
+          <div class="sub">${f.totalVendas} vendas no funil</div>
+        </div>
+        <div class="funnel-stat">
+          <div class="label">👥 Clientes únicos</div>
+          <div class="value">${f.clientesUnicos.toLocaleString('pt-BR')}</div>
+          <div class="sub">compraram o front</div>
+        </div>
+        <div class="funnel-stat">
+          <div class="label">💵 Ticket médio do funil</div>
+          <div class="value">${formatBRL(f.ticketMedioFunil)}</div>
+          <div class="sub">por cliente único</div>
+        </div>
+        ${f.bumps.length > 0 ? `
+        <div class="funnel-stat">
+          <div class="label">🟠 Taxa média de bump</div>
+          <div class="value">${formatPct(taxaBumpMedia)}</div>
+          <div class="sub">média dos ${f.bumps.length} bump${f.bumps.length > 1 ? 's' : ''}</div>
+        </div>
+        ` : ''}
+        ${f.upsells.length > 0 ? `
+        <div class="funnel-stat">
+          <div class="label">🟣 Conversão upsell</div>
+          <div class="value">${formatPct(convPrincipal)}</div>
+          <div class="sub">front → upsell</div>
+        </div>
+        ` : ''}
+      </div>
+      
+      ${stagesHtml}
+    </div>
+  `;
+}
+
+function renderComparacao() {
+  const f1 = calcularFunil('styleclub');
+  const f2 = calcularFunil('manualmala');
+  if (!f1 || !f2) return '';
+  
+  const conv1 = f1.upsells[0]?.conversao || 0;
+  const conv2 = f2.upsells[0]?.conversao || 0;
+  const ticketWinner = f1.ticketMedioFunil > f2.ticketMedioFunil ? 1 : 2;
+  const convWinner = conv1 > conv2 ? 1 : 2;
+  const fatWinner = f1.faturamentoTotal > f2.faturamentoTotal ? 1 : 2;
+  
+  return `
+    <div class="funnel-card">
+      <div class="funnel-card-header">
+        <div>
+          <div class="funnel-card-title">⚔️ Comparação de funis</div>
+          <div class="funnel-card-subtitle">Qual funil está performando melhor</div>
+        </div>
+      </div>
+      
+      <div class="comparison-grid">
+        <div class="comparison-card">
+          <div class="title">${f1.meta.icone} ${f1.meta.nome}</div>
+          <div class="comparison-row"><span class="lbl">Vendas Front</span><span class="val">${f1.front.vendas}</span></div>
+          ${f1.bumps.map(b => `<div class="comparison-row"><span class="lbl">🟠 ${b.nome}</span><span class="val">${b.vendas} <span style="color: #fbbf24; font-size: 11px;">(${formatPct(b.conversao)})</span></span></div>`).join('')}
+          ${f1.upsells.map(u => `<div class="comparison-row"><span class="lbl">🟣 ${u.nome}</span><span class="val">${u.vendas} <span style="color: #a78bfa; font-size: 11px;">(${formatPct(u.conversao)})</span></span></div>`).join('')}
+          <div class="comparison-row"><span class="lbl">Faturamento</span><span class="val" style="color: ${fatWinner === 1 ? '#34d399' : '#fff'};">${formatBRL(f1.faturamentoTotal)} ${fatWinner === 1 ? '🏆' : ''}</span></div>
+          <div class="comparison-row"><span class="lbl">Ticket médio</span><span class="val" style="color: ${ticketWinner === 1 ? '#34d399' : '#fff'};">${formatBRL(f1.ticketMedioFunil)} ${ticketWinner === 1 ? '🏆' : ''}</span></div>
+        </div>
+        
+        <div class="comparison-card">
+          <div class="title">${f2.meta.icone} ${f2.meta.nome}</div>
+          <div class="comparison-row"><span class="lbl">Vendas Front</span><span class="val">${f2.front.vendas}</span></div>
+          ${f2.bumps.map(b => `<div class="comparison-row"><span class="lbl">🟠 ${b.nome}</span><span class="val">${b.vendas} <span style="color: #fbbf24; font-size: 11px;">(${formatPct(b.conversao)})</span></span></div>`).join('')}
+          ${f2.upsells.map(u => `<div class="comparison-row"><span class="lbl">🟣 ${u.nome}</span><span class="val">${u.vendas} <span style="color: #a78bfa; font-size: 11px;">(${formatPct(u.conversao)})</span></span></div>`).join('')}
+          <div class="comparison-row"><span class="lbl">Faturamento</span><span class="val" style="color: ${fatWinner === 2 ? '#34d399' : '#fff'};">${formatBRL(f2.faturamentoTotal)} ${fatWinner === 2 ? '🏆' : ''}</span></div>
+          <div class="comparison-row"><span class="lbl">Ticket médio</span><span class="val" style="color: ${ticketWinner === 2 ? '#34d399' : '#fff'};">${formatBRL(f2.ticketMedioFunil)} ${ticketWinner === 2 ? '🏆' : ''}</span></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function render() {
+  const f = filtrar();
+  const aprov = f.filter(v => /APPROV|APROV|COMPLETE/i.test(v.status));
+  const fat = aprov.reduce((s,v) => s+v.valor, 0);
+  const total = aprov.length;
+  const tm = total > 0 ? fat/total : 0;
+  const hoje = new Date().toDateString();
+  const vh = vendas.filter(v => v.data && v.data.toDateString() === hoje && /APPROV|APROV|COMPLETE/i.test(v.status)).length;
+  const produtosUnicos = [...new Set(vendas.map(v => v.produto).filter(p => p))].sort();
+
+  const porDia = {};
+  f.forEach(v => { if (!v.data) return; const k = v.data.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' }); if (!porDia[k]) porDia[k] = { dia: k, fat: 0, dt: v.data }; porDia[k].fat += v.valor; });
+  const dias = Object.values(porDia).sort((a,b) => a.dt - b.dt);
+
+  const qtdPorDia = {};
+  aprov.forEach(v => { if (!v.data) return; const k = v.data.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' }); if (!qtdPorDia[k]) qtdPorDia[k] = { dia: k, qtd: 0, dt: v.data }; qtdPorDia[k].qtd += 1; });
+  const diasQtd = Object.values(qtdPorDia).sort((a,b) => a.dt - b.dt);
+
+  const porTipo = {};
+  f.forEach(v => { const t = v.tipo || 'Não classificado'; if (!porTipo[t]) porTipo[t] = { tipo: t, fat: 0, n: 0 }; porTipo[t].fat += v.valor; porTipo[t].n += 1; });
+  const tipos = Object.values(porTipo);
+
+  const porProd = {};
+  f.forEach(v => { const p = v.produto || 'Sem produto'; if (!porProd[p]) porProd[p] = { produto: p, fat: 0, n: 0 }; porProd[p].fat += v.valor; porProd[p].n += 1; });
+  const top = Object.values(porProd).sort((a,b) => b.fat - a.fat).slice(0,5);
+
+  const porSt = {};
+  f.forEach(v => { const s = v.status || 'Sem status'; if (!porSt[s]) porSt[s] = { status: s, count: 0 }; porSt[s].count += 1; });
+  const sts = Object.values(porSt);
+
+  const CORES_TIPO = { 'Front':'#10B981','Order Bump':'#F59E0B','Upsell':'#8B5CF6','Não classificado':'#6B7280' };
+  const corTipo = t => CORES_TIPO[t] || '#6B7280';
+  const corStatus = s => /APPROV|COMPLETE/i.test(s) ? '#10B981' : /CANCEL/i.test(s) ? '#EF4444' : /REFUND/i.test(s) ? '#F59E0B' : '#6B7280';
+
+  const filtrosAtivos = [];
+  if (filtroPeriodo !== 'todos') {
+    const labels = { 'hoje':'Hoje', '7dias':'Últimos 7 dias', '30dias':'Últimos 30 dias' };
+    filtrosAtivos.push({ label: labels[filtroPeriodo], onClear: "setPeriodo('todos')" });
+  }
+  if (filtroDataInicio) filtrosAtivos.push({ label: `De: ${new Date(filtroDataInicio+'T00:00:00').toLocaleDateString('pt-BR')}`, onClear: "limparDataInicio()" });
+  if (filtroDataFim) filtrosAtivos.push({ label: `Até: ${new Date(filtroDataFim+'T00:00:00').toLocaleDateString('pt-BR')}`, onClear: "limparDataFim()" });
+  if (filtroTipo !== 'todos') {
+    const labels = { 'front':'Front', 'bump':'Order Bump', 'upsell':'Upsell' };
+    filtrosAtivos.push({ label: `Tipo: ${labels[filtroTipo]}`, onClear: "setTipo('todos')" });
+  }
+  if (filtroProduto !== 'todos') filtrosAtivos.push({ label: `Produto: ${filtroProduto}`, onClear: "setProduto('todos')" });
+  if (busca) filtrosAtivos.push({ label: `Busca: "${busca}"`, onClear: "limparBusca()" });
+
+  let funisHtml = '';
+  if (funilSelecionado === 'todos') {
+    funisHtml = renderComparacao() + renderFunil('styleclub') + renderFunil('manualmala');
+  } else {
+    funisHtml = renderFunil(funilSelecionado);
+  }
+
+  document.getElementById('app').innerHTML = `
+    <header class="header">
+      <div class="header-inner">
+        <div class="logo-area">
+          <div class="logo-icon">📊</div>
+          <div class="logo-text">
+            <h1>Dashboard Hotmart</h1>
+            <p>${vendas.length} vendas • ${mapeamento.length} ofertas mapeadas • Atualização ${tempoDesde()}</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button onclick="toggleAuto()" class="btn ${autoRefresh ? 'btn-auto' : 'btn-auto off'}">${autoRefresh ? '🟢 Auto' : '⚪ Manual'}</button>
+          <button onclick="buscarDados()" class="btn">🔄 Atualizar</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="section-title">🎯 Análise de Funis</div>
+      <div class="funnel-selector">
+        <button onclick="setFunil('todos')" class="funnel-btn ${funilSelecionado==='todos'?'active':''}">
+          <span class="icon">📊</span>
+          <div class="title">Todos os funis</div>
+          <div class="subtitle">Comparação geral</div>
+        </button>
+        ${Object.entries(FUNIS_META).map(([key, meta]) => `
+          <button onclick="setFunil('${key}')" class="funnel-btn ${funilSelecionado===key?'active':''}">
+            <span class="icon">${meta.icone}</span>
+            <div class="title">Funil ${meta.nome}</div>
+            <div class="subtitle">${meta.subtitle}</div>
+          </button>
+        `).join('')}
+      </div>
+
+      ${funisHtml}
+
+      <div class="section-title" style="margin-top: 32px;">⚙️ Filtros gerais</div>
+      <div class="filters-section">
+        <div class="filters-row">
+          <div class="filter-group">
+            <span class="filter-label-mini">Período:</span>
+            ${[['todos','Todos'],['hoje','Hoje'],['7dias','7 dias'],['30dias','30 dias']].map(([v,l]) => `<button onclick="setPeriodo('${v}')" class="pill ${filtroPeriodo===v?'active-emerald':''}">${l}</button>`).join('')}
+          </div>
+        </div>
+        <div class="filters-row">
+          <div class="filter-group">
+            <span class="filter-label-mini">📅 Data customizada:</span>
+            <input type="date" class="date-input" value="${filtroDataInicio}" onchange="setDataInicio(this.value)">
+            <span style="color: #64748b; font-size: 13px;">até</span>
+            <input type="date" class="date-input" value="${filtroDataFim}" onchange="setDataFim(this.value)">
+          </div>
+        </div>
+        <div class="filters-row">
+          <div class="filter-group">
+            <span class="filter-label-mini">Tipo:</span>
+            ${[['todos','Todos'],['front','Front'],['bump','Order Bump'],['upsell','Upsell']].map(([v,l]) => `<button onclick="setTipo('${v}')" class="pill ${filtroTipo===v?'active-cyan':''}">${l}</button>`).join('')}
+          </div>
+          <div class="filter-group">
+            <span class="filter-label-mini">📦 Produto:</span>
+            <select class="select-custom" onchange="setProduto(this.value)">
+              <option value="todos" ${filtroProduto==='todos'?'selected':''}>Todos os produtos</option>
+              ${produtosUnicos.map(p => `<option value="${p}" ${filtroProduto===p?'selected':''}>${p}</option>`).join('')}
+            </select>
+          </div>
+          <div class="search-box">
+            <input type="text" placeholder="Buscar..." value="${busca}" oninput="setBusca(this.value)">
+          </div>
+        </div>
+        ${filtrosAtivos.length > 0 ? `<div class="active-filters"><span style="color: #94a3b8; font-size: 12px; align-self: center; margin-right: 4px;">Ativos:</span>${filtrosAtivos.map(f => `<span class="filter-tag">${f.label}<span class="remove" onclick="${f.onClear}">×</span></span>`).join('')}<button class="clear-filters-btn" onclick="limparTodosFiltros()">Limpar tudo</button></div>` : ''}
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card"><div class="metric-glow" style="background: linear-gradient(135deg, #10B981, #06B6D4);"></div><div class="top"><span class="label">Faturamento</span><div class="icon-box" style="background: linear-gradient(135deg, #10B981, #06B6D4); box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);">💰</div></div><div class="value">${formatBRL(fat)}</div></div>
+        <div class="metric-card"><div class="metric-glow" style="background: linear-gradient(135deg, #06B6D4, #3B82F6);"></div><div class="top"><span class="label">Vendas Aprovadas</span><div class="icon-box" style="background: linear-gradient(135deg, #06B6D4, #3B82F6); box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.3);">🛒</div></div><div class="value">${total.toLocaleString('pt-BR')}</div></div>
+        <div class="metric-card"><div class="metric-glow" style="background: linear-gradient(135deg, #8B5CF6, #A855F7);"></div><div class="top"><span class="label">Ticket Médio</span><div class="icon-box" style="background: linear-gradient(135deg, #8B5CF6, #A855F7); box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.3);">📈</div></div><div class="value">${formatBRL(tm)}</div></div>
+        <div class="metric-card"><div class="metric-glow" style="background: linear-gradient(135deg, #F59E0B, #F97316);"></div><div class="top"><span class="label">Vendas Hoje</span><div class="icon-box" style="background: linear-gradient(135deg, #F59E0B, #F97316); box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.3);">📅</div></div><div class="value">${vh.toLocaleString('pt-BR')}</div></div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-header"><div><h3>Faturamento por dia</h3><p>Evolução das vendas</p></div><div class="icon-box" style="background: rgba(16, 185, 129, 0.1); color: #34d399;">📈</div></div>
+          ${dias.length > 0 ? '<div class="chart-container"><canvas id="chartLinha"></canvas></div>' : '<div class="empty-state">Sem dados</div>'}
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><h3>Por tipo</h3><p>Front / Bump / Upsell</p></div><div class="icon-box" style="background: rgba(139, 92, 246, 0.1); color: #a78bfa;">📦</div></div>
+          ${tipos.length > 0 ? `<div class="chart-container small"><canvas id="chartPie"></canvas></div><div class="legend-list">${tipos.map(t => `<div class="legend-item"><span><span class="legend-dot" style="background: ${corTipo(t.tipo)};"></span>${t.tipo}</span><span style="font-weight: 500;">${formatBRL(t.fat)}</span></div>`).join('')}</div>` : '<div class="empty-state">Sem dados</div>'}
+        </div>
+      </div>
+
+      <div class="charts-row full">
+        <div class="chart-card">
+          <div class="chart-header"><div><h3>Quantidade de vendas por dia ${filtroProduto !== 'todos' ? `— ${filtroProduto}` : ''}</h3><p>Volume diário</p></div><div class="icon-box" style="background: rgba(6, 182, 212, 0.1); color: #22d3ee;">📊</div></div>
+          ${diasQtd.length > 0 ? '<div class="chart-container tall"><canvas id="chartQuantidade"></canvas></div>' : '<div class="empty-state">Sem dados</div>'}
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-header"><div><h3>Top 5 produtos</h3><p>Maior faturamento</p></div><div class="icon-box" style="background: rgba(6, 182, 212, 0.1); color: #22d3ee;">🏆</div></div>
+          ${top.length > 0 ? `<div class="product-rank">${top.map((p, i) => { const max = top[0].fat; const pc = max > 0 ? (p.fat/max)*100 : 0; const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-other'; return `<div><div class="product-row"><span style="display: flex; align-items: center;"><span class="product-rank-num ${rankClass}">${i+1}</span><span style="font-weight: 500;">${p.produto}</span></span><span style="text-align: right;"><div style="font-weight: 600;">${formatBRL(p.fat)}</div><div style="font-size: 12px; color: #64748b;">${p.n} venda${p.n !== 1 ? 's' : ''}</div></span></div><div class="progress-bar"><div class="progress-fill" style="width: ${pc}%;"></div></div></div>`; }).join('')}</div>` : '<div class="empty-state">Sem dados</div>'}
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><h3>Status</h3><p>Distribuição</p></div><div class="icon-box" style="background: rgba(245, 158, 11, 0.1); color: #fbbf24;">👥</div></div>
+          ${sts.length > 0 ? `<div class="status-list">${sts.map(s => { const totalSt = sts.reduce((sum, x) => sum + x.count, 0); const pc = totalSt > 0 ? (s.count/totalSt)*100 : 0; return `<div><div class="status-row"><span style="color: #cbd5e1;">${s.status}</span><span style="font-weight: 600;">${s.count}</span></div><div class="status-bar"><div style="height: 100%; width: ${pc}%; background: ${corStatus(s.status)}; border-radius: 999px;"></div></div></div>`; }).join('')}</div>` : '<div class="empty-state">Sem dados</div>'}
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header"><h3>Vendas detalhadas</h3><p>${f.length} resultados</p></div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Data</th><th>Cliente</th><th>Produto</th><th>Tipo</th><th class="right">Valor</th><th class="center">Status</th></tr></thead>
+            <tbody>
+              ${f.length === 0 ? `<tr><td colspan="6" class="empty-state">Nenhuma venda encontrada</td></tr>` : f.slice(0, 50).map(v => `<tr><td style="color: #cbd5e1; white-space: nowrap;">${v.dataStr || '-'}</td><td><div class="client-name">${v.nome}</div><div class="client-email">${v.email}</div></td><td style="color: #cbd5e1;">${v.produto}</td><td><span class="badge" style="background: ${corTipo(v.tipo)}20; color: ${corTipo(v.tipo)};">${v.tipo}</span></td><td class="right" style="font-weight: 600;">${formatBRL(v.valor)}</td><td class="center"><span class="badge" style="background: ${corStatus(v.status)}20; color: ${corStatus(v.status)};">${v.status}</span></td></tr>`).join('')}
+            </tbody>
+          </table>
+          ${f.length > 50 ? `<div class="table-footer">Mostrando 50 de ${f.length} vendas</div>` : ''}
+        </div>
+      </div>
+
+      <div class="footer">${autoRefresh ? '<span class="pulse-dot"></span><span>Conectado ao Google Sheets • Atualiza a cada 60s</span>' : '<span>Atualização desativada</span>'}</div>
+    </main>
+  `;
+
+  if (chartLinha) { chartLinha.destroy(); chartLinha = null; }
+  if (chartPie) { chartPie.destroy(); chartPie = null; }
+  if (chartQuantidade) { chartQuantidade.destroy(); chartQuantidade = null; }
+
+  if (dias.length > 0) {
+    const ctx = document.getElementById('chartLinha');
+    if (ctx) chartLinha = new Chart(ctx, { type: 'line', data: { labels: dias.map(d => d.dia), datasets: [{ label: 'Faturamento', data: dias.map(d => d.fat), borderColor: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.1)', tension: 0.3, fill: true, pointRadius: 5, pointBackgroundColor: '#10B981', pointHoverRadius: 7, borderWidth: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0f172a', borderColor: '#334155', borderWidth: 1, padding: 12, displayColors: false, callbacks: { label: ctx => formatBRL(ctx.parsed.y) } } }, scales: { x: { grid: { color: 'rgba(30, 41, 59, 0.5)' }, ticks: { color: '#64748b' } }, y: { grid: { color: 'rgba(30, 41, 59, 0.5)' }, ticks: { color: '#64748b', callback: v => 'R$' + (v/1000).toFixed(0) + 'k' } } } } });
+  }
+
+  if (tipos.length > 0) {
+    const ctx2 = document.getElementById('chartPie');
+    if (ctx2) chartPie = new Chart(ctx2, { type: 'doughnut', data: { labels: tipos.map(t => t.tipo), datasets: [{ data: tipos.map(t => t.fat), backgroundColor: tipos.map(t => corTipo(t.tipo)), borderColor: '#0f172a', borderWidth: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0f172a', borderColor: '#334155', borderWidth: 1, padding: 12, callbacks: { label: ctx => formatBRL(ctx.parsed) } } }, cutout: '60%' } });
+  }
+
+  if (diasQtd.length > 0) {
+    const ctx3 = document.getElementById('chartQuantidade');
+    if (ctx3) chartQuantidade = new Chart(ctx3, { type: 'bar', data: { labels: diasQtd.map(d => d.dia), datasets: [{ label: 'Quantidade', data: diasQtd.map(d => d.qtd), backgroundColor: 'rgba(6, 182, 212, 0.6)', borderColor: '#06B6D4', borderWidth: 2, borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0f172a', borderColor: '#334155', borderWidth: 1, padding: 12, displayColors: false, callbacks: { label: ctx => `${ctx.parsed.y} venda${ctx.parsed.y !== 1 ? 's' : ''}` } } }, scales: { x: { grid: { display: false }, ticks: { color: '#64748b' } }, y: { beginAtZero: true, grid: { color: 'rgba(30, 41, 59, 0.5)' }, ticks: { color: '#64748b', stepSize: 1, precision: 0 } } } } });
+  }
+}
+
+window.setFunil = function(f) { funilSelecionado = f; render(); };
+window.setPeriodo = function(p) { filtroPeriodo = p; if (p !== 'todos') { filtroDataInicio = ''; filtroDataFim = ''; } render(); };
+window.setTipo = function(t) { filtroTipo = t; render(); };
+window.setProduto = function(p) { filtroProduto = p; render(); };
+window.setBusca = function(v) { busca = v; render(); };
+window.setDataInicio = function(v) { filtroDataInicio = v; if (v) filtroPeriodo = 'todos'; render(); };
+window.setDataFim = function(v) { filtroDataFim = v; if (v) filtroPeriodo = 'todos'; render(); };
+window.limparDataInicio = function() { filtroDataInicio = ''; render(); };
+window.limparDataFim = function() { filtroDataFim = ''; render(); };
+window.limparBusca = function() { busca = ''; render(); };
+window.limparTodosFiltros = function() { filtroPeriodo = 'todos'; filtroTipo = 'todos'; filtroProduto = 'todos'; filtroDataInicio = ''; filtroDataFim = ''; busca = ''; render(); };
+window.buscarDados = buscarDados;
+window.toggleAuto = function() { autoRefresh = !autoRefresh; if (autoRefresh) intervalRef = setInterval(() => buscarDados(true), REFRESH_MS); else clearInterval(intervalRef); render(); };
+
+buscarDados();
+intervalRef = setInterval(() => buscarDados(true), REFRESH_MS);
+setInterval(() => { if (vendas.length > 0) render(); }, 30000);
+</script>
+
+</body>
+</html>
